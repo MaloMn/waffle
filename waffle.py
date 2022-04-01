@@ -1,7 +1,7 @@
 import random
 import copy
-from utils import load_data, words_to_grid, check_grid, grid_path_generator
-from colors import color_text, GREEN, YELLOW
+from utils import load_data, words_to_grid, check_grid, grid_path_generator, get_diff
+from colors import color_text, GREEN, YELLOW, ENDC
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
 from numpy.typing import ArrayLike
@@ -19,6 +19,8 @@ class Waffle:
         self.chosen_words:  List[str] = ['', '', '', '', '', '']
         self.true_grid:     ArrayLike = np.empty((5, 5), dtype=str)
         self.shuffled_grid: ArrayLike = np.empty((5, 5), dtype=str)
+        # 0 if correctly placed, 1 if in same line/column, 2 else
+        self.diff:          ArrayLike = np.empty((5, 5), dtype=int)
 
         # Making up a new grid
         self.new_waffle_grid()
@@ -81,11 +83,14 @@ class Waffle:
             a, b = random.choices(possible_switch_indexes, k=2)
             self.shuffled_grid[a], self.shuffled_grid[b] = self.shuffled_grid[b], self.shuffled_grid[a]
 
+        self.diff = get_diff(self.true_grid, self.shuffled_grid)
+
         if detail:
             print("Initial grid: ", self.true_grid)
             print("Shuffled grid: ", self.shuffled_grid)
 
     def __str__(self):
+        print(self.diff)
         output = copy.deepcopy(self.shuffled_grid).tolist()
 
         # To handle words containing twice or more the same letter, a reference is built
@@ -93,24 +98,14 @@ class Waffle:
         ref = copy.deepcopy(self.true_grid)
 
         for x, y in grid_path_generator(5):
-            letter = output[x][y]
+            letter = self.shuffled_grid[x, y]
 
-            if letter == ' ':
-                continue
-
-            if ref[x, y] == letter:
-                output[x][y] = color_text(GREEN, letter)
-            elif x % 2 == 1 and y % 2 == 0:
-                # Located in lines 1 and 3
-                if letter in ref[:, y]:
-                    output[x][y] = color_text(YELLOW, letter)
-            elif x % 2 == 0 and y % 2 == 1:
-                # Located in columns 1 and 3
-                if letter in ref[x, :]:
-                    output[x][y] = color_text(YELLOW, letter)
-
-            # Remove letter from reference
-            ref[x, y] = ''
+            if self.diff[x, y] == 0:
+                output[x][y] = GREEN + letter + ENDC
+            elif self.diff[x, y] == 1:
+                output[x][y] = YELLOW + letter + ENDC
+            else:
+                output[x][y] = letter
 
         return '\n'.join([' '.join(output[x]) for x in range(5)])
 
