@@ -42,7 +42,7 @@ def check_grid(choices: List[str], index: int) -> bool:
     return output
 
 
-def words_to_grid(words: List[str]) -> ArrayLike[str, str]:
+def words_to_grid(words: List[str]) -> ArrayLike:
     """
     Convert list of words to the grid of letters formong the waffle.
     :param words: List of words
@@ -52,7 +52,7 @@ def words_to_grid(words: List[str]) -> ArrayLike[str, str]:
                      [words[5][3], ' ', words[0][3], ' ', words[3][3]], list(words[4])])
 
 
-def grid_path_generator(n: int) -> Generator[int, int]:
+def grid_path_generator(n: int) -> Generator[int, None, None]:
     for i in range(n):
         for j in range(n):
             yield i, j
