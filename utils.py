@@ -74,7 +74,6 @@ def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
 
     for x, y in grid_path_generator(5):
         letter = shuffled_grid[x, y]
-        print(x, y, letter, ref)
 
         if letter == ' ' or letter == true_grid[x, y]:
             continue
@@ -99,8 +98,5 @@ def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
             idx = np.where(ref == letter)
             idx = [i for i in list(zip(*idx)) if i[0] == x or i[1] == y][0]
             ref[idx] = ''
-
-        else:
-            print(letter, ref[x, :], ref[:, y])
 
     return diff
