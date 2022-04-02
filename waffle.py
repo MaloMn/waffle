@@ -12,18 +12,31 @@ class Waffle:
     """
     Represents a Waffle, meaning it contains the words to be found in the grid.
     It also handles shuffling the grid, and swapping letters.
+    Words in list follow below order:
+
+    2 2 0 2 2
+    5   0   3
+    1 1 0 1 1
+    5   0   3
+    4 4 0 4 3
     """
 
-    def __init__(self):
-        self.data:          List[str] = load_data()
-        self.chosen_words:  List[str] = ['', '', '', '', '', '']
-        self.true_grid:     ArrayLike = np.empty((5, 5), dtype=str)
+    def __init__(self, words=None, shuffle=None) -> None:
+        self.data: List[str] = load_data()
+        self.chosen_words: List[str] = ['', '', '', '', '', '']
+        self.true_grid: ArrayLike = np.empty((5, 5), dtype=str)
         self.shuffled_grid: ArrayLike = np.empty((5, 5), dtype=str)
         # 0 if correctly placed, 1 if in same line/column, 2 else
-        self.diff:          ArrayLike = np.empty((5, 5), dtype=int)
+        self.diff: ArrayLike = np.empty((5, 5), dtype=int)
 
-        # Making up a new grid
-        self.new_waffle_grid()
+        print(words, shuffle)
+
+        if words is None or shuffle is None:
+            # Making up a new grid
+            self.new_waffle_grid()
+        else:
+            print(words)
+            self.load_waffle(words, shuffle)
 
     def build_waffle_grid(self, word_index: int) -> bool:
         """
@@ -61,12 +74,13 @@ class Waffle:
                 self.shuffle_grid()
                 return
 
-    def load_waffle(self, words: List[str]) -> None:
+    def load_waffle(self, words: List[str], shuffle: List[str]) -> None:
         self.chosen_words = words
         self.true_grid = words_to_grid(words)
-        self.shuffle_grid()
+        self.shuffled_grid = words_to_grid(shuffle)
+        self.diff = get_diff(self.true_grid, self.shuffled_grid)
 
-    def shuffle_grid(self, nb: int = 10, detail: bool = True    ) -> None:
+    def shuffle_grid(self, nb: int = 10, detail: bool = False) -> None:
         """
         Make nb swaps between letters of the grid.
         :param nb: Number of swaps
@@ -90,7 +104,6 @@ class Waffle:
             print("Shuffled grid: ", self.shuffled_grid)
 
     def __str__(self):
-        print(self.diff)
         output = copy.deepcopy(self.shuffled_grid).tolist()
 
         # To handle words containing twice or more the same letter, a reference is built
@@ -111,5 +124,6 @@ class Waffle:
 
 
 if __name__ == '__main__':
-    waffle = Waffle()
+    waffle = Waffle(words=['impel', 'input', 'weigh', 'hutch', 'filth', 'whiff'],
+                    shuffle=['eipit', 'iepmn', 'wtech', 'hlnuh', 'fhtgh', 'wuiff'])
     print(waffle)
