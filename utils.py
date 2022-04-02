@@ -60,7 +60,7 @@ def grid_path_generator(n: int) -> Generator[int, None, None]:
 
 
 def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
-    diff = np.zeros((5, 5))
+    diff = np.full((5, 5), 2)
 
     # To handle words containing twice or more the same letter, a reference is built
     # and letters are removed from that reference when they are used
@@ -70,6 +70,7 @@ def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
     for x, y in grid_path_generator(5):
         if shuffled_grid[x, y] == true_grid[x, y]:
             ref[x, y] = ''
+            diff[x, y] = 0
 
     for x, y in grid_path_generator(5):
         letter = shuffled_grid[x, y]
@@ -77,14 +78,12 @@ def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
         if letter == ' ' or letter == true_grid[x, y]:
             continue
 
-        if x % 2 == 1 and y % 2 == 0:
+        if x % 2 == 1 and y % 2 == 0 :
             # Located in lines 1 and 3
             if letter in ref[:, y]:
                 diff[x, y] = 1
                 idx = np.where(ref[:, y] == letter)
                 ref[idx, y] = ''
-            else:
-                diff[x, y] = 2
 
         elif x % 2 == 0 and y % 2 == 1:
             # Located in columns 1 and 3
@@ -92,17 +91,16 @@ def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
                 diff[x, y] = 1
                 idx = np.where(ref[:, x] == letter)
                 ref[x, idx] = ''
-            else:
-                diff[x, y] = 2
 
-        else:
-            if letter in ref[x, :] or letter in ref[:, y]:
-                diff[x, y] = 1
-                idx = np.where(ref == letter)
-                idx = [i for i in idx if idx[0] == x or idx[1] == y][0]
+        elif letter in ref[x, :] or letter in ref[:, y]:
+            diff[x, y] = 1
+            idx = np.where(ref == letter)
+
+            if np.count_nonzero(ref == letter) == 1:
                 ref[idx] = ''
             else:
-                diff[x, y] = 2
+                idx = [i for i in idx if i[0] == y or i[1] == x][0]
+                ref[idx] = ''
 
         # Remove letter from reference
         ref[x, y] = ''
