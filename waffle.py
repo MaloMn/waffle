@@ -75,9 +75,9 @@ class Waffle:
                 return
 
     def load_waffle(self, words: List[str], shuffle: List[str]) -> None:
-        self.chosen_words = words
-        self.true_grid = words_to_grid(words)
-        self.shuffled_grid = words_to_grid(shuffle)
+        self.chosen_words = [w.upper() for w in words]
+        self.true_grid = words_to_grid(self.chosen_words)
+        self.shuffled_grid = words_to_grid([w.upper() for w in shuffle])
         self.diff = get_diff(self.true_grid, self.shuffled_grid)
 
     def shuffle_grid(self, nb: int = 10, detail: bool = False) -> None:
