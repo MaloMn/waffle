@@ -17,9 +17,16 @@ class WaffleSolver:
 def words_constraints(waffle: Waffle, details: bool = False) -> List[List[Set[str]]]:
     constraints: List[List[Set[str]]] = [[set() for i in range(5)] for i in range(5)]
 
-    green = np.where(waffle.diff == 2)
+    green = np.where(waffle.diff == 0)
     orange = np.where(waffle.diff == 1)
-    black = np.where(waffle.diff == 0)
+    black = np.where(waffle.diff == 2)
+
+    if details:
+        print("Diff matrix:")
+        print(waffle.diff)
+        print("Green:", list(zip(*green)))
+        print("Orange:", list(zip(*orange)))
+        print("Black:", list(zip(*black)))
 
     # Add orange letters on their respective lines and/or columns
     for x, y in list(zip(*orange)):
@@ -28,29 +35,33 @@ def words_constraints(waffle: Waffle, details: bool = False) -> List[List[Set[st
         if letter == ' ':
             continue
 
-        # Add letter on its column
+        # Add letter on its line
         if x % 2 == 0:
             for i in range(5):
                 if i != y:
-                    constraints[i][y].add(letter)
+                    constraints[x][i].add(letter)
 
-        # Add letter on its line
+        # Add letter on its column
         if y % 2 == 0:
             for i in range(5):
                 if i != x:
-                    constraints[x][i].add(letter)
+                    constraints[i][y].add(letter)
+
+    if details:
+        print("\nAdded orange letters:")
+        print(constraints)
 
     # Add black letters to other lines/columns
     for x, y in list(zip(*black)):
         # 1. Gather all positions
         positions = [(x, y) for x in range(5) for y in range(5)]
-        # Remove column positions
+        # Remove line positions
         if x % 2 == 0:
             for i in range(5):
                 if (x, i) not in positions:
                     positions.remove((x, i))
 
-        # Remove line positions
+        # Remove column positions
         if y % 2 == 0:
             for i in range(5):
                 if (i, y) not in positions:
@@ -59,6 +70,10 @@ def words_constraints(waffle: Waffle, details: bool = False) -> List[List[Set[st
         # Now that positions have been curated, we add the letter to the constraints
         for i, j in positions:
             constraints[i][j].add(letter)
+
+    if details:
+        print("\nAdded black letters:")
+        print(constraints)
 
     # Set letters that are right
     for x, y in list(zip(*green)):
