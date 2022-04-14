@@ -10,11 +10,10 @@ class WaffleSolver:
     def __init__(self, waffle: Waffle):
         self.waffle = waffle
         self.location_constraints: List[List[Set[str]]] = words_constraints(self.waffle)
-        print(self.location_constraints)
         self.freq_constraints: Dict[str, int] = get_frequency(self.waffle.shuffled_grid)
         self.solution: List[str] = []
 
-    def get_solution(self) -> None:
+    def solve(self) -> None:
         """
         Returns a solution to the waffle puzzle.
         This solution is a possibility, and might not be the right one.
@@ -51,6 +50,9 @@ class WaffleSolver:
 
 def words_constraints(waffle: Waffle, details: bool = False) -> List[List[Set[str]]]:
     constraints: List[List[Set[str]]] = [[set() for i in range(5)] for i in range(5)]
+
+    print(waffle.shuffled_grid)
+    print(waffle.diff)
 
     green = np.where(waffle.diff == 0)
     orange = np.where(waffle.diff == 1)
@@ -186,15 +188,12 @@ def check_freq_constraint(true, observed) -> bool:
 
 
 if __name__ == "__main__":
-    waffle = Waffle(words=['impel', 'input', 'weigh', 'hutch', 'filth', 'whiff'],
-                    shuffle=['eipit', 'iepmn', 'wtech', 'hlnuh', 'fhtgh', 'wuiff'])
-    print(waffle)
+    waffle = Waffle()
+    waffle.load_shuffled_waffle(['aatue', 'eltbv', 'roaal', 'lovin', 'tiein', 'raent'],
+                                np.array([[0, 2, 1, 0, 0], [2, 0, 2, 0, 2], [1, 2, 0, 1, 2],
+                                          [2, 0, 2, 0, 1], [0, 2, 2, 2, 0]]))
 
     solver = WaffleSolver(waffle)
-    solver.get_solution()
+    solver.solve()
 
     print(solver.solution)
-    print(waffle.chosen_words)
-
-
-

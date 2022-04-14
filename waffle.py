@@ -29,14 +29,9 @@ class Waffle:
         # 0 if correctly placed, 1 if in same line/column, 2 else
         self.diff: ArrayLike = np.empty((5, 5), dtype=int)
 
-        print(words, shuffle)
-
         if words is None or shuffle is None:
             # Making up a new grid
             self.new_waffle_grid()
-        else:
-            print(words)
-            self.load_waffle(words, shuffle)
 
     def build_waffle_grid(self, word_index: int) -> bool:
         """
@@ -74,11 +69,14 @@ class Waffle:
                 self.shuffle_grid()
                 return
 
-    def load_waffle(self, words: List[str], shuffle: List[str]) -> None:
+    def load_shuffled_waffle(self, shuffle: List[str], diff: ArrayLike) -> None:
+        self.shuffled_grid = words_to_grid([w.upper() for w in shuffle])
+        self.diff = diff
+
+    def load_waffle(self, words: List[str]) -> None:
         self.chosen_words = [w.upper() for w in words]
         self.true_grid = words_to_grid(self.chosen_words)
-        self.shuffled_grid = words_to_grid([w.upper() for w in shuffle])
-        self.diff = get_diff(self.true_grid, self.shuffled_grid)
+        self.shuffle_grid()
 
     def shuffle_grid(self, nb: int = 10, detail: bool = False) -> None:
         """
