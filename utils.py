@@ -45,7 +45,7 @@ def check_grid(choices: List[str], index: int) -> bool:
 
 def words_to_grid(words: List[str]) -> ArrayLike:
     """
-    Convert list of words to the grid of letters formong the waffle.
+    Convert list of words to the grid of letters forming the waffle.
     :param words: List of words
     :return: Grid of letters
     """
