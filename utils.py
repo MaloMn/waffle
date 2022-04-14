@@ -23,8 +23,8 @@ def check_grid(choices: List[str], index: int) -> bool:
 
     # TODO Find index based on the number of '' in the array
     # Check that a word does not appear more than once
-    for word in choices:
-        if word != '' and choices.count(word) > 1:
+    for word in choices[:index + 1]:
+        if choices.count(word) > 1:
             return False
 
     output = True
@@ -49,8 +49,39 @@ def words_to_grid(words: List[str]) -> ArrayLike:
     :param words: List of words
     :return: Grid of letters
     """
-    return np.array([list(words[2]), [words[5][1], ' ', words[0][1], ' ', words[3][1]], list(words[1]),
-                     [words[5][3], ' ', words[0][3], ' ', words[3][3]], list(words[4])])
+    output = np.array([[' '] * 5] * 5)
+
+    # First word
+    for i in range(5):
+        if i < len(words[0]):
+            output[i, 2] = words[0][i]
+
+    # Second word
+    for i in [0, 1, 3, 4]:
+        if i < len(words[1]):
+            output[2, i] = words[1][i]
+
+    # Third word
+    for i in [0, 1, 3, 4]:
+        if i < len(words[2]):
+            output[0, i] = words[2][i]
+
+    # Fourth word
+    for i in [1, 3, 4]:
+        if i < len(words[3]):
+            output[i, 4] = words[3][i]
+
+    # Fifth word
+    for i in [0, 1, 3]:
+        if i < len(words[4]):
+            output[4, i] = words[4][i]
+
+    # Sixth word
+    for i in [1, 3]:
+        if i < len(words[5]):
+            output[i, 0] = words[5][i]
+
+    return output
 
 
 def grid_path_generator(n: int) -> Generator[int, None, None]:

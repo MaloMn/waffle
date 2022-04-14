@@ -2,7 +2,7 @@ from waffle import Waffle
 import numpy as np
 from numpy.typing import ArrayLike
 from typing import List, Set, Tuple, Any, Dict
-from utils import load_data, check_grid
+from utils import load_data, check_grid, words_to_grid
 
 
 class WaffleSolver:
@@ -10,8 +10,8 @@ class WaffleSolver:
     def __init__(self, waffle: Waffle):
         self.waffle = waffle
         self.location_constraints: List[List[Set[str]]] = words_constraints(self.waffle)
-        self.freq_constraints: Dict[str, int] = get_frequency(
-            [''.join(w) for w in grid_to_words(self.waffle.shuffled_grid)])
+        print(self.location_constraints)
+        self.freq_constraints: Dict[str, int] = get_frequency(self.waffle.shuffled_grid)
         self.solution: List[str] = []
 
     def get_solution(self) -> None:
@@ -31,14 +31,15 @@ class WaffleSolver:
         :return: boolean
         """
         # Ending condition
-        if '' not in self.solution:
+        if word_index > 5:
             return True
 
         for word in get_words_match(self.location_constraints[word_index]):
             # See if words fits
             option = self.solution[:]
             option[word_index] = word
-            if check_grid(option, word_index) and check_freq_constraint(self.freq_constraints, get_frequency(option)):
+            if check_grid(option, word_index) and check_freq_constraint(
+                    self.freq_constraints, get_frequency(words_to_grid(option))):
                 self.solution[word_index] = word
                 if self.rec_find_solution(word_index + 1):
                     return True
@@ -106,23 +107,22 @@ def words_constraints(waffle: Waffle, details: bool = False) -> List[List[Set[st
         print("\nAdded green letters:")
         print(constraints)
 
-    return grid_to_words(constraints)
+    return grid_constraints_to_constraints(constraints)
 
 
-def get_frequency(words: List[str], details: bool = False) -> Dict[str, int]:
+def get_frequency(waffle_grid: ArrayLike, details: bool = False) -> Dict[str, int]:
     """
     Returns a dictionary with the frequency of each letter in the grid.
-    :param words:
+    :param waffle_grid:
     :param details:
     :return:
     """
     frequency: Dict[str, int] = {letter: 0 for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'}
-
-    letters = ''.join(words)
-    print(letters)
+    letters = ''.join([''.join(w) for w in waffle_grid])
 
     for letter in letters:
-        frequency[letter] += 1
+        if letter in frequency.keys():
+            frequency[letter] += 1
 
     return {k: v for k, v in frequency.items() if v > 0}
 
@@ -143,7 +143,7 @@ def get_line_column(position: Tuple[int, int]):
     return output
 
 
-def grid_to_words(grid: List[List[Any]]) -> List[List[Any]]:
+def grid_constraints_to_constraints(grid: List[List[Any]]) -> List[List[Any]]:
     """
     Converts a waffle grid to a list of words.
     :param grid:
@@ -152,6 +152,16 @@ def grid_to_words(grid: List[List[Any]]) -> List[List[Any]]:
     return [[grid[x][2] for x in range(5)], [grid[2][y] for y in range(5)],
             [grid[0][y] for y in range(5)], [grid[x][4] for x in range(5)],
             [grid[4][y] for y in range(5)], [grid[x][0] for x in range(5)]]
+
+
+def grid_to_words(grid: List[List[Any]]) -> List[Any]:
+    """
+    Converts a waffle grid to a list of words.
+    :param grid:
+    :return:
+    """
+    output = grid_constraints_to_constraints(grid)
+    return [''.join(w) for w in output]
 
 
 def get_words_match(constraint: List[Set[str]]) -> List[str]:
@@ -172,7 +182,6 @@ def check_freq_constraint(true, observed) -> bool:
     :param observed:
     :return:
     """
-    print(true, observed)
     return all([observed[letter] <= true[letter] for letter in observed])
 
 
