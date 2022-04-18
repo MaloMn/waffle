@@ -8,15 +8,17 @@ Main source: https://en.wikipedia.org/wiki/A*_search_algorithm
 
 Grid will be represented as strings representing the state of the grid:
 
-A B C D E
-F   G   H
-I J K L M   => "ABCDEFGHIJKLMNOPQRSTU"
-N   O   P
-Q R S T U
+    A B C D E
+    F   G   H
+    I J K L M   => "ABCDEFGHIJKLMNOPQRSTU"
+    N   O   P
+    Q R S T U
 
 """
-from collections.abc import Callable
-from typing import Dict, Set, List, Generator
+from typing import Dict, Set, List, Generator, Optional, Tuple
+from colors import GREEN, YELLOW, ENDC
+from utils import get_diff
+from numpy.typing import ArrayLike
 
 
 class SimplifiedWaffle:
@@ -25,21 +27,44 @@ class SimplifiedWaffle:
     with only the letters and their "color".
     """
 
-    def __init__(self, letters: str, diff: str, goal: str):
+    goal = ""
+
+    def __init__(self, letters: str, diff: str = "0" * 21, goal: Optional[str] = None):
         """
         :param letters: Letters of the waffle.
         :param diff: Diff of the waffle.
         :param goal: Goal of the waffle.
         """
-        self.letters = letters
-        self.diff = diff
-        self.goal = goal
+        self.letters = letters.upper()
+        if SimplifiedWaffle.goal == "":
+            SimplifiedWaffle.goal = goal.upper()
+            self.diff = diff
+        else:
+            # TODO Re-use the function to determine diff from letters & goal
+            self.diff = diff
 
     def __hash__(self):
         """
         :return: Hash of the waffle.
         """
         return hash(self.letters + self.diff + self.goal)
+
+    def __str__(self):
+
+        output = ""
+
+        for i, letter in enumerate(self.letters):
+            if self.diff[i] == "2":
+                output += letter
+            elif self.diff[i] == "1":
+                output += YELLOW + letter + ENDC
+            else:
+                output += GREEN + letter + ENDC
+
+        output += " (" + GREEN + str(self.diff.count("0")) + ENDC + ", " + \
+            YELLOW + str(self.diff.count("1")) + ENDC + ", " + str(self.diff.count("2")) + ")"
+
+        return output
 
 
 def reconstruct_path(came_from: Dict[int, int], current: int,
@@ -63,14 +88,14 @@ def heuristic(waffle: SimplifiedWaffle) -> int:
     return int((len(waffle.letters) - waffle.diff.count('0')) / 2)
 
 
-def neighbours(waffle: SimplifiedWaffle) -> Generator[SimplifiedWaffle]:
+def neighbours(waffle: SimplifiedWaffle) -> Generator[SimplifiedWaffle, None, None]:
     """
     Return all the neighbours of a waffle (meaning only switching 2 letters).
     """
-    switchable: Dict[int, str] = {i: letter for i, letter in enumerate(waffle.letters) if waffle.diff[i] != '0'}
+    switchable: List[Tuple[int, str]] = [(i, letter) for i, letter in enumerate(waffle.letters) if waffle.diff[i] != '0']
 
-    for i in switchable:
-        for j in switchable:
+    for idi, (i, letter_i) in enumerate(switchable):
+        for idj, (j, letter_j) in enumerate(switchable[idi + 1:]):
             if waffle.letters[i] != waffle.letters[j]:
                 yield SimplifiedWaffle(waffle.letters[:i] + waffle.letters[j] + waffle.letters[i+1:j] +
                                        waffle.letters[i] + waffle.letters[j+1:],
@@ -78,12 +103,12 @@ def neighbours(waffle: SimplifiedWaffle) -> Generator[SimplifiedWaffle]:
                                        waffle.diff[i] + waffle.diff[j+1:], waffle.goal)
 
 
-def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle, h: Callable) -> List[SimplifiedWaffle]:
+def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle) -> List[SimplifiedWaffle]:
     links: Dict[int, SimplifiedWaffle] = {hash(start): start}
     open_set: Set[int] = {hash(start)}
     came_from: Dict[int, int] = {}
     g_score: Dict[int, int] = {hash(start): 0}
-    f_score: Dict[int, int] = {hash(start): h(start)}
+    f_score: Dict[int, int] = {hash(start): heuristic(start)}
 
     while open_set:
         current = min(open_set, key=lambda x: f_score[x])
@@ -92,20 +117,46 @@ def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle, h: Callable) -> List
             return reconstruct_path(came_from, current, links)
         open_set.remove(current)
 
+        print(links[current], "has {} neighbours".format(len(list(neighbours(links[current])))))
+
+        print("\n => ".join([n.__str__() for n in list(neighbours(links[current]))]))
+
         for neighbour in neighbours(links[current]):
             tentative_g_score = g_score[current] + 1
-            if hash(neighbour) not in g_score or tentative_g_score < g_score[hash(neighbour)]:
+            if hash(neighbour) in g_score and tentative_g_score < g_score[hash(neighbour)]:
                 came_from[hash(neighbour)] = current
                 g_score[hash(neighbour)] = tentative_g_score
-                f_score[hash(neighbour)] = tentative_g_score + h(neighbour)
+                f_score[hash(neighbour)] = tentative_g_score + heuristic(neighbour)
                 open_set.add(hash(neighbour))
 
     return []
 
 
-if __name__ == "__main__":
-    
+# Conversion functions below
+def grid_from_grid_string(grid: str) -> ArrayLike:
+    pass
 
-    # a_star(SimplifiedWaffle("ABCDEFGHIJKLMNOPQRSTU", "", "ABCDEFGHIJKLMNOPQRSTU"),
-    #        SimplifiedWaffle("ABCDEFGHIJKLMNOPQRSTU", "", "ABCDEFGHIJKLMNOPQRSTU"),
-    #        heuristic)
+
+def grid_string_from_grid(diff: ArrayLike) -> str:
+    pass
+
+
+def get_string_diff(waffle: SimplifiedWaffle) -> str:
+    """
+    Wrapper for get_diff, using string representations of grids.
+    """
+
+    true_grid: ArrayLike = grid_from_grid_string(SimplifiedWaffle.goal)
+    shuffled_grid: ArrayLike = grid_from_grid_string(waffle.letters)
+    diff: ArrayLike = get_diff(true_grid, shuffled_grid)
+
+    return grid_string_from_grid(diff)
+
+
+if __name__ == "__main__":
+    start = SimplifiedWaffle("CNNSECVGNEAPLERAKINHT", diff="022001221102222202120", goal="ABCDEFGHIJKLMNOPQRSTU")
+    goal = SimplifiedWaffle("CHASERGVINANECPNKNELT")
+
+    print(start)
+
+    print(a_star(start, goal))
