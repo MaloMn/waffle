@@ -15,9 +15,8 @@ N   O   P
 Q R S T U
 
 """
-from numpy.typing import ArrayLike
 from collections.abc import Callable
-from typing import Dict, Set, List
+from typing import Dict, Set, List, Generator
 
 
 class SimplifiedWaffle:
@@ -61,7 +60,22 @@ def heuristic(waffle: SimplifiedWaffle) -> int:
     Method: Number of left letters / 2
     This assumes that every move is perfect => Always underestimates real cost.
     """
-    return int((len(waffle.letters) - waffle.diff.count('2')) / 2)
+    return int((len(waffle.letters) - waffle.diff.count('0')) / 2)
+
+
+def neighbours(waffle: SimplifiedWaffle) -> Generator[SimplifiedWaffle]:
+    """
+    Return all the neighbours of a waffle (meaning only switching 2 letters).
+    """
+    switchable: Dict[int, str] = {i: letter for i, letter in enumerate(waffle.letters) if waffle.diff[i] != '0'}
+
+    for i in switchable:
+        for j in switchable:
+            if waffle.letters[i] != waffle.letters[j]:
+                yield SimplifiedWaffle(waffle.letters[:i] + waffle.letters[j] + waffle.letters[i+1:j] +
+                                       waffle.letters[i] + waffle.letters[j+1:],
+                                       waffle.diff[:i] + waffle.diff[j] + waffle.diff[i+1:j] +
+                                       waffle.diff[i] + waffle.diff[j+1:], waffle.goal)
 
 
 def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle, h: Callable) -> List[SimplifiedWaffle]:
@@ -78,16 +92,20 @@ def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle, h: Callable) -> List
             return reconstruct_path(came_from, current, links)
         open_set.remove(current)
 
-        for neighbor in neighbors(current):
+        for neighbour in neighbours(links[current]):
             tentative_g_score = g_score[current] + 1
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                came_from[neighbor] = current
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = tentative_g_score + h(neighbor)
-                open_set.add(neighbor)
+            if hash(neighbour) not in g_score or tentative_g_score < g_score[hash(neighbour)]:
+                came_from[hash(neighbour)] = current
+                g_score[hash(neighbour)] = tentative_g_score
+                f_score[hash(neighbour)] = tentative_g_score + h(neighbour)
+                open_set.add(hash(neighbour))
+
+    return []
 
 
 if __name__ == "__main__":
-    a_star(SimplifiedWaffle("ABCDEFGHIJKLMNOPQRSTU", "", "ABCDEFGHIJKLMNOPQRSTU"),
-           SimplifiedWaffle("ABCDEFGHIJKLMNOPQRSTU", "", "ABCDEFGHIJKLMNOPQRSTU"),
-           heuristic)
+    
+
+    # a_star(SimplifiedWaffle("ABCDEFGHIJKLMNOPQRSTU", "", "ABCDEFGHIJKLMNOPQRSTU"),
+    #        SimplifiedWaffle("ABCDEFGHIJKLMNOPQRSTU", "", "ABCDEFGHIJKLMNOPQRSTU"),
+    #        heuristic)
