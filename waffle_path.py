@@ -19,6 +19,42 @@ from typing import Dict, Set, List, Generator, Optional, Tuple
 from colors import GREEN, YELLOW, ENDC
 from utils import get_diff
 from numpy.typing import ArrayLike
+import numpy as np
+from statistics import mean
+
+
+# Conversion functions below
+def grid_from_grid_string(grid: str) -> ArrayLike:
+    return np.array([list(grid[:5]),
+                     [grid[5], ' ', grid[6], ' ', grid[7]],
+                     list(grid[8:13]),
+                     [grid[13], ' ', grid[14], ' ', grid[15]],
+                     list(grid[16:])])
+
+
+def grid_string_from_grid(diff: ArrayLike) -> str:
+    diff[1, 1] = -1
+    diff[1, 3] = -1
+    diff[3, 1] = -1
+    diff[3, 3] = -1
+
+    return ''.join([''.join([str(a) for a in row if a != -1]) for row in diff])
+
+
+def get_string_diff(letters: str) -> str:
+    """
+    Wrapper for get_diff, using string representations of grids.
+    """
+    true_grid: ArrayLike = grid_from_grid_string(SimplifiedWaffle.goal)
+    shuffled_grid: ArrayLike = grid_from_grid_string(letters)
+
+    # print(letters)
+    # print(true_grid)
+    # print(shuffled_grid)
+
+    diff: ArrayLike = get_diff(true_grid, shuffled_grid)
+
+    return grid_string_from_grid(diff)
 
 
 class SimplifiedWaffle:
@@ -40,8 +76,8 @@ class SimplifiedWaffle:
             SimplifiedWaffle.goal = goal.upper()
             self.diff = diff
         else:
-            # TODO Re-use the function to determine diff from letters & goal
-            self.diff = diff
+            # Determine diff from letters & goal
+            self.diff = get_string_diff(self.letters)
 
     def __hash__(self):
         """
@@ -62,13 +98,13 @@ class SimplifiedWaffle:
                 output += GREEN + letter + ENDC
 
         output += " (" + GREEN + str(self.diff.count("0")) + ENDC + ", " + \
-            YELLOW + str(self.diff.count("1")) + ENDC + ", " + str(self.diff.count("2")) + ")"
+            YELLOW + str(self.diff.count("1")) + ENDC + ", " + str(self.diff.count("2")) + ") " + self.diff
 
         return output
 
 
 def reconstruct_path(came_from: Dict[int, int], current: int,
-                     link: Dict[int, SimplifiedWaffle]) -> List[SimplifiedWaffle]:
+                     links: Dict[int, SimplifiedWaffle]) -> List[SimplifiedWaffle]:
     """
     Reconstruct the path from the came_from dictionary.
     """
@@ -76,7 +112,7 @@ def reconstruct_path(came_from: Dict[int, int], current: int,
     while current in came_from:
         current = came_from[current]
         total_path.append(current)
-    return [link[w] for w in total_path]
+    return [links[w] for w in total_path if w is not None][::-1]
 
 
 def heuristic(waffle: SimplifiedWaffle) -> int:
@@ -106,57 +142,41 @@ def neighbours(waffle: SimplifiedWaffle) -> Generator[SimplifiedWaffle, None, No
 def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle) -> List[SimplifiedWaffle]:
     links: Dict[int, SimplifiedWaffle] = {hash(start): start}
     open_set: Set[int] = {hash(start)}
-    came_from: Dict[int, int] = {}
-    g_score: Dict[int, int] = {hash(start): 0}
+    came_from: Dict[int, Optional[int]] = {hash(start): None}
+    cost_so_far: Dict[int, int] = {hash(start): 0}
     f_score: Dict[int, int] = {hash(start): heuristic(start)}
 
     while open_set:
         current = min(open_set, key=lambda x: f_score[x])
+        open_set.remove(current)
+
+        #print(len(open_set), np.mean([v for k, v in f_score.items() if k in open_set]))
 
         if current == hash(goal):
             return reconstruct_path(came_from, current, links)
-        open_set.remove(current)
 
-        print(links[current], "has {} neighbours".format(len(list(neighbours(links[current])))))
-
-        print("\n => ".join([n.__str__() for n in list(neighbours(links[current]))]))
+        #print(links[current], "has {} neighbours".format(len(list(neighbours(links[current])))))
+        #print("\n => ".join([n.__str__() for n in list(neighbours(links[current]))]))
 
         for neighbour in neighbours(links[current]):
-            tentative_g_score = g_score[current] + 1
-            if hash(neighbour) in g_score and tentative_g_score < g_score[hash(neighbour)]:
+            tentative_g_score = cost_so_far[current] + 1
+            if hash(neighbour) not in cost_so_far or tentative_g_score < cost_so_far[hash(neighbour)]:
                 came_from[hash(neighbour)] = current
-                g_score[hash(neighbour)] = tentative_g_score
+                cost_so_far[hash(neighbour)] = tentative_g_score
                 f_score[hash(neighbour)] = tentative_g_score + heuristic(neighbour)
                 open_set.add(hash(neighbour))
+                links[hash(neighbour)] = neighbour
 
     return []
 
 
-# Conversion functions below
-def grid_from_grid_string(grid: str) -> ArrayLike:
-    pass
-
-
-def grid_string_from_grid(diff: ArrayLike) -> str:
-    pass
-
-
-def get_string_diff(waffle: SimplifiedWaffle) -> str:
-    """
-    Wrapper for get_diff, using string representations of grids.
-    """
-
-    true_grid: ArrayLike = grid_from_grid_string(SimplifiedWaffle.goal)
-    shuffled_grid: ArrayLike = grid_from_grid_string(waffle.letters)
-    diff: ArrayLike = get_diff(true_grid, shuffled_grid)
-
-    return grid_string_from_grid(diff)
-
-
 if __name__ == "__main__":
-    start = SimplifiedWaffle("CNNSECVGNEAPLERAKINHT", diff="022001221102222202120", goal="ABCDEFGHIJKLMNOPQRSTU")
+    start = SimplifiedWaffle("CNNSECVGNEAPLERAKINHT", diff="022001221102222202120", goal="CHASERGVINANECPNKNELT")
+    #start = SimplifiedWaffle("CHASECGVINANELRNKENPT", diff="000001000000022001120", goal="CHASERGVINANECPNKNELT")
     goal = SimplifiedWaffle("CHASERGVINANECPNKNELT")
 
     print(start)
+    result = a_star(start, goal)
 
-    print(a_star(start, goal))
+    for w in result:
+        print(w)
