@@ -5,6 +5,7 @@ from colors import color_text, GREEN, YELLOW, ENDC
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
 from numpy.typing import ArrayLike
+from waffle_solver import WaffleSolver
 
 
 class Waffle:
@@ -69,9 +70,16 @@ class Waffle:
                 self.shuffle_grid()
                 return
 
-    def load_shuffled_waffle(self, shuffle: List[str], diff: ArrayLike) -> None:
+    def load_shuffled_waffle(self, shuffle: str, diff: ArrayLike) -> None:
+        shuffle = grid_string_to_words(shuffle)
         self.shuffled_grid = words_to_grid([w.upper() for w in shuffle])
         self.diff = diff
+        # Solving the waffle
+        solver = WaffleSolver(self.shuffled_grid, self.diff)
+        solver.solve()
+        # Load the solved waffle!
+        self.chosen_words = [w.upper() for w in solver.solution]
+        self.true_grid = words_to_grid(self.chosen_words)
 
     def load_waffle(self, words: List[str]) -> None:
         self.chosen_words = [w.upper() for w in words]
@@ -121,7 +129,21 @@ class Waffle:
         return '\n'.join([' '.join(output[x]) for x in range(5)])
 
 
+def grid_string_to_words(grid: str) -> List[str]:
+    """
+    Converts a grid string to a list of words
+    :param grid: grid string
+    :return: list of words
+    """
+    grid = grid.upper()
+    return [grid[2:19:4], grid[8:13], grid[:5], ''.join([grid[i] for i in [4, 7, 12, 15, 20]]), grid[16:],
+            ''.join([grid[i] for i in [0, 5, 8, 13, 16]])]
+
+
 if __name__ == '__main__':
-    waffle = Waffle(words=['impel', 'input', 'weigh', 'hutch', 'filth', 'whiff'],
-                    shuffle=['eipit', 'iepmn', 'wtech', 'hlnuh', 'fhtgh', 'wuiff'])
+    waffle = Waffle()
+    waffle.load_shuffled_waffle('roaalaaoeltbvnuitiein',
+                                np.array([[0, 2, 1, 0, 0], [2, 0, 2, 0, 2], [1, 2, 0, 1, 2],
+                                          [2, 0, 2, 0, 1], [0, 2, 2, 2, 0]]))
+
     print(waffle)

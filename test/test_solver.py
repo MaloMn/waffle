@@ -1,5 +1,5 @@
 import unittest
-from WaffleSolver import get_line_column
+from waffle_solver import get_line_column
 
 
 class TestWaffleSolver(unittest.TestCase):
