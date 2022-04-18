@@ -1,8 +1,7 @@
 import random
-import copy
-from utils import load_data, words_to_grid, check_grid, grid_path_generator, get_diff
-from colors import color_text, GREEN, YELLOW, ENDC
-from typing import List, Tuple, Dict, Any, Optional
+from utils import *
+from colors import GREEN, YELLOW, ENDC
+from typing import List
 import numpy as np
 from numpy.typing import ArrayLike
 from waffle_solver import WaffleSolver
@@ -127,17 +126,6 @@ class Waffle:
                 output[x][y] = letter
 
         return '\n'.join([' '.join(output[x]) for x in range(5)])
-
-
-def grid_string_to_words(grid: str) -> List[str]:
-    """
-    Converts a grid string to a list of words
-    :param grid: grid string
-    :return: list of words
-    """
-    grid = grid.upper()
-    return [grid[2:19:4], grid[8:13], grid[:5], ''.join([grid[i] for i in [4, 7, 12, 15, 20]]), grid[16:],
-            ''.join([grid[i] for i in [0, 5, 8, 13, 16]])]
 
 
 if __name__ == '__main__':

@@ -131,3 +131,29 @@ def get_diff(true_grid: ArrayLike, shuffled_grid: ArrayLike) -> ArrayLike:
             ref[idx] = ''
 
     return diff
+
+
+def grid_string_to_words(grid: str) -> List[str]:
+    """
+    Converts a grid string to a list of words
+    :param grid: grid string
+    :return: list of words
+    """
+    grid = grid.upper()
+    return [grid[2:19:4], grid[8:13], grid[:5], ''.join([grid[i] for i in [4, 7, 12, 15, 20]]), grid[16:],
+            ''.join([grid[i] for i in [0, 5, 8, 13, 16]])]
+
+
+def words_to_grid_string(words: List[str]) -> str:
+    """
+    Converts a list of words to a grid string
+    :param words: list of words
+    :return: grid string
+    """
+    return ''.join([words[2], words[5][1], words[0][1], words[3][1],
+                    words[1], words[5][3], words[0][3], words[3][3],
+                    words[4]])
+
+
+if __name__ == "__main__":
+    print(grid_string_to_words('roaalaaoeltbvnuitiein'))
