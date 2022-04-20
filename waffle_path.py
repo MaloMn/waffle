@@ -98,7 +98,7 @@ class SimplifiedWaffle:
                 output += GREEN + letter + ENDC
 
         output += " (" + GREEN + str(self.diff.count("0")) + ENDC + ", " + \
-            YELLOW + str(self.diff.count("1")) + ENDC + ", " + str(self.diff.count("2")) + ") " + self.diff
+            YELLOW + str(self.diff.count("1")) + ENDC + ", " + str(self.diff.count("2")) + ")"
 
         return output
 
@@ -178,16 +178,11 @@ def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle) -> List[SimplifiedWa
 
 def compare_waffles(waffle_a, waffle_b):
     output = ""
-    is_first = True
-    print(waffle_a.letters, waffle_b.letters)
     for a, b in zip(waffle_a.letters, waffle_b.letters):
         if a == b:
             output += "-"
-        elif is_first:
-            output += a
-            is_first = False
         else:
-            output += b
+            output += a
 
     return output
 
@@ -199,7 +194,8 @@ if __name__ == "__main__":
 
     result = a_star(start, goal)
 
-    print("Solution found in {} moves.".format(len(result)))
+    print("Solution found in {} moves.\n".format(len(result) - 1))
 
-    for i, w in enumerate(result[1:]):
-        print(w, compare_waffles(result[i - 1], w))
+    for a, b in zip(result[:len(result) - 1], result[1:]):
+        print(a, compare_waffles(a, b))
+    print(result[-1])
