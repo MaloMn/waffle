@@ -124,6 +124,13 @@ def heuristic(waffle: SimplifiedWaffle) -> int:
     return int((len(waffle.letters) - waffle.diff.count('0')) / 2)
 
 
+def is_perfect_move(previous: SimplifiedWaffle, waffle: SimplifiedWaffle) -> bool:
+    """
+    Check if the move is perfect.
+    """
+    return waffle.diff.count('0') == 2 + previous.diff.count('0')
+
+
 def neighbours(waffle: SimplifiedWaffle) -> Generator[SimplifiedWaffle, None, None]:
     """
     Return all the neighbours of a waffle (meaning only switching 2 letters).
@@ -150,13 +157,8 @@ def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle) -> List[SimplifiedWa
         current = min(open_set, key=lambda x: f_score[x])
         open_set.remove(current)
 
-        #print(len(open_set), np.mean([v for k, v in f_score.items() if k in open_set]))
-
         if current == hash(goal):
             return reconstruct_path(came_from, current, links)
-
-        #print(links[current], "has {} neighbours".format(len(list(neighbours(links[current])))))
-        #print("\n => ".join([n.__str__() for n in list(neighbours(links[current]))]))
 
         for neighbour in neighbours(links[current]):
             tentative_g_score = cost_so_far[current] + 1
@@ -167,16 +169,37 @@ def a_star(start: SimplifiedWaffle, goal: SimplifiedWaffle) -> List[SimplifiedWa
                 open_set.add(hash(neighbour))
                 links[hash(neighbour)] = neighbour
 
+                if is_perfect_move(links[current], neighbour):
+                    open_set = {hash(neighbour)}
+                    break
+
     return []
 
 
-if __name__ == "__main__":
-    start = SimplifiedWaffle("CNNSECVGNEAPLERAKINHT", diff="022001221102222202120", goal="CHASERGVINANECPNKNELT")
-    #start = SimplifiedWaffle("CHASECGVINANELRNKENPT", diff="000001000000022001120", goal="CHASERGVINANECPNKNELT")
-    goal = SimplifiedWaffle("CHASERGVINANECPNKNELT")
+def compare_waffles(waffle_a, waffle_b):
+    output = ""
+    is_first = True
+    print(waffle_a.letters, waffle_b.letters)
+    for a, b in zip(waffle_a.letters, waffle_b.letters):
+        if a == b:
+            output += "-"
+        elif is_first:
+            output += a
+            is_first = False
+        else:
+            output += b
 
-    print(start)
+    return output
+
+
+if __name__ == "__main__":
+    start = SimplifiedWaffle("BESOLIEENIKOAREADWROR", diff="022102212202100202220", goal="BROILOAOASKEWREEDINER")
+    #start = SimplifiedWaffle("CHASECGVINANELRNKENPT", diff="000001000000022001120", goal="CHASERGVINANECPNKNELT")
+    goal = SimplifiedWaffle("BROILOAOASKEWREEDINER")
+
     result = a_star(start, goal)
 
-    for w in result:
-        print(w)
+    print("Solution found in {} moves.".format(len(result)))
+
+    for i, w in enumerate(result[1:]):
+        print(w, compare_waffles(result[i - 1], w))
